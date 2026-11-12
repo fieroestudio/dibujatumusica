@@ -405,9 +405,11 @@
     }
     const r = yToRow(L.s.p[L.s.p.length-1][1]);
     const now = performance.now();
+    if (playing && now - lastLive > 100){ rebuild(); lastLive = now; }   // lo que se dibuja delante del cabezal suena ya
     if (r!==L.lastRow && now-L.lastT>90){ preview(L.s.i, r); L.lastRow=r; L.lastT=now; }
     bctx.save(); strokePath(bctx, {i:L.s.i, p:L.s.p.slice(-6)}, lw()); bctx.restore();
   });
+  let lastLive = 0;
   const endStroke = e => {
     if (!live.has(e.pointerId)) return;
     live.delete(e.pointerId); eraserAt = null;
@@ -455,10 +457,10 @@
             prevNotes.forEach(ph => { if (ph.col===c-1 && !now.has(ph.key) && Math.abs(ph.last-row)<=3 && (!best || Math.abs(ph.last-row)<Math.abs(best.last-row))) best = ph; });
             if (best){
               best.rows.push(row); best.ys.push(y); best.last=row; best.col=c; now.set(best.key, best);
-              schedule[c].push({visual:true, si, i:s.i, x, y});   // solo el punto que marca el cruce
+              schedule[c].push({visual:true, si, i:s.i, x, y, ph:best, k:best.rows.length-1});   // punto del cruce; permite arrancar a mitad
               return;
             }
-            const ph = {glide:true, key:si+'-'+c+'-'+row, si, i:s.i, row, rows:[row], ys:[y], last:row, col:c, x, y};
+            const ph = {glide:true, key:si+'-'+c+'-'+row, si, i:s.i, row, rows:[row], ys:[y], last:row, col:c, col0:c, x, y};
             schedule[c].push(ph); now.set(ph.key, ph);
             return;
           }
@@ -821,13 +823,13 @@
   // mode: (por defecto) de nota en nota de la escala; 'free' sigue la línea sin escalones;
   // 'bend' mantiene la nota y la altura mueve otra cosa (los parámetros marcados con true).
   // Cada parámetro: [param, multiplicador de la frecuencia o función(frecuencia), sigue la altura en 'bend']
-  function playPhrase(n, t, sd, stroke){
+  function playPhrase(n, t, sd, stroke, from=0){
     if (!ac) return;
     const snd = sound(n.i), mode = snd.mode;
-    const fs = mode==='free' ? n.ys.map(y => hz(freeMidi(y) + snd.oct)) : n.rows.map(r => hz(rowToMidi(r) + snd.oct));
+    const fs = mode==='free' ? n.ys.slice(from).map(y => hz(freeMidi(y) + snd.oct)) : n.rows.slice(from).map(r => hz(rowToMidi(r) + snd.oct));
     const vg = ac.createGain(), g = ac.createGain(); g.connect(vg); out(vg, snd.wet ?? 1);
-    own(vg, stroke, t + n.rows.length*sd + 3);
-    const P = snd.hold(g, fs[0], t, t + n.rows.length*sd*0.97);
+    own(vg, stroke, t + fs.length*sd + 3);
+    const P = snd.hold(g, fs[0], t, t + fs.length*sd*0.97);
     const val = (m, f) => typeof m==='function' ? m(f) : f*m;
     if (mode==='free') P.forEach(([param, m]) => param.setValueAtTime(val(m, fs[0]), t));
     for (let k=1;k<fs.length;k++){
@@ -842,6 +844,18 @@
   function preview(i, row){ if (!ac) return; playNote(i, row, ac.currentTime+0.01, 0.15); }
 
   // ---------- Secuenciador ----------
+  // Hasta cuándo suena cada frase continua (por trazo y por su punto de inicio), para no repetirla
+  const phraseEnd = new WeakMap();
+  const phraseKey = ph => ph.col0 + '-' + ph.row;
+  function phraseCovers(ph, t){
+    const m = phraseEnd.get(strokes[ph.si]); return !!m && (m.get(phraseKey(ph)) || 0) > t + 0.01;
+  }
+  function startPhrase(ph, from, t, sd){
+    const st = strokes[ph.si]; if (!st) return;
+    playPhrase(ph, t, sd, st, from);
+    if (!phraseEnd.has(st)) phraseEnd.set(st, new Map());
+    phraseEnd.get(st).set(phraseKey(ph), t + (ph.rows.length-from)*sd*0.97);
+  }
   let nextStep=0, nextTime=0, loopStart=0, timer=null;
   const stepDur = () => 60/bpm/2;
   const playBtn = document.getElementById('play');
@@ -853,7 +867,8 @@
     while (nextTime < ac.currentTime + 0.12){
       const sd = stepDur();
       schedule[nextStep]?.forEach(n => {
-        if (n.glide) playPhrase(n, nextTime, sd, strokes[n.si]);
+        if (n.glide) startPhrase(n, 0, nextTime, sd);
+        else if (n.ph && !phraseCovers(n.ph, nextTime)) startPhrase(n.ph, n.k, nextTime, sd);   // línea nueva o alargada: suena desde aquí
         else if (!n.visual) playNote(n.i, n.row, nextTime, n.len*sd, strokes[n.si]);
         const delay = (nextTime - ac.currentTime)*1000;
         setTimeout(() => hit(n), Math.max(0,delay));
