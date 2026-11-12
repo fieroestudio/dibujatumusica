@@ -482,7 +482,7 @@
   const voices = new Map();   // instrumento-nota -> voz que suena, para cortarla si se repite
   function ensureAudio(){
     if (ac){ if (ac.state!=='running') ac.resume(); return; }
-    // iPhone: que suene aunque el interruptor de silencio esté puesto (Safari 16.4 o posterior)
+    // iPhone: que suene aunque el interruptor de silencio esté puesto (iOS 17 o posterior); pausa la música de otras apps
     try{ if (navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(_){}
     try{
       ac = new (window.AudioContext||window.webkitAudioContext)();
