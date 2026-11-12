@@ -1,0 +1,4 @@
+# Foto original del título (letra de un niño y mano visible): solo en la carpeta local
+titulo/*.jpg
+titulo/*.jpeg
+titulo/*.png
