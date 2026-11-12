@@ -4,7 +4,7 @@ Lee este documento al empezar una conversación nueva en el proyecto. Resume lo 
 
 **Dónde está cada cosa:**
 - **Repositorio (referencia):** https://github.com/fieroestudio/dibujatumusica, rama `main`. Un push a `main` publica en GitHub Pages.
-- **Carpeta local (PC "msi"):** `C:\Users\UNPARDEDOS\Desktop\CLAUDE\APP DIBUJA TU MUSICA`. Tiene además la foto original del título, que no se sube al repositorio.
+- **Carpeta local (PC "msi"):** `C:\Users\UNPARDEDOS\Desktop\CLAUDE\DIBUJA TU MUSICA`. Tiene además la foto original del título, que no se sube al repositorio.
 - **Proyecto de claude.ai:** `claude/CONTEXTO.md` y `claude/codigo/index.html`. Es una copia para leer desde el móvil.
 - **Artefacto antiguo en claude.ai** (slug `a65713c1-…`): fue el prototipo, se deja de usar y se le quitará el acceso público.
 
