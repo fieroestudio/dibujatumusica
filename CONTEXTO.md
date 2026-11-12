@@ -14,7 +14,7 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 
 - **Web:** GitHub Pages del repositorio `fieroestudio/dibujatumusica` (ver arriba). Quien tiene el enlace ve cada versión nueva al recargar, así que no se publican versiones rotas.
 - **Dispositivos de Adrian:** Android y PC, no hay iOS.
-- **Versión actual:** v12 (12-11-2026): 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
+- **Versión actual:** v13 (12-11-2026): icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
 
 ## Cómo funciona
 
@@ -58,7 +58,8 @@ El número de cada color es el que se guarda en el código: no reordenar. 0-4 va
 - **Iconos de línea SVG en todo,** sin emojis.
 - **Grupo sonido:** los 10 colores (5×2 en vertical, 2×5 en horizontal), la pastilla de velocidad y el botón de juego de sonidos. **Grupo herramientas:** play, goma, deshacer, papelera, Compartir y descargar, y Mis dibujos.
 - **Vertical:** título, lienzo, sonido y herramientas. **Horizontal:** sonido, lienzo y herramientas. En el móvil en horizontal, el título va dentro del lienzo vacío.
-- **Pantalla completa:** botón pequeño arriba a la izquierda. No aparece donde el navegador no lo permite (iPhone).
+- **Pantalla completa:** botón pequeño arriba a la izquierda. No aparece donde el navegador no lo permite (iPhone) ni cuando se abre como app instalada.
+- **Icono y app instalable (v13):** icono = un trazo ámbar con el cabezal, el punto negro y el aro de una nota que suena (opción elegida por Adrian para probar; se puede cambiar). Archivos: `icons/icon.svg` (pestaña), `icon-180.png` (iPhone/iPad), `icon-192.png` y `icon-512.png` (Android) e `icon-maskable-512.png` (Android recorta la forma), y `manifest.webmanifest` con nombre corto "Dibuja música" y apertura a pantalla completa. Los PNG se generaron desde el SVG con Chrome headless.
 - **Título:** "DIBUJA TU MÚSICA" escrito a mano por un niño (foto del 11-11-2026), vectorizado letra a letra con OpenCV en `TITLE_SVG`. Cada letra va en un color de instrumento. Se mantuvieron las "I" en forma de bandera; solo se ajustó el espacio entre letras.
 - **Cuadrícula:** líneas por cada nota y columnas cada 2 pasos. No hacerla más fina que las notas reales, porque engañaría.
 - **Goma:** borra con el dedo y parte los trazos. Deshacer funciona por instantáneas (máximo 40) y cubre trazo, borrado y papelera.
@@ -86,7 +87,8 @@ Un botón abre un panel con cuatro opciones. Los archivos se generan primero y l
 2. **Probar el vídeo en el Android:** comprobar que el MP4 se abre en la galería y en WhatsApp.
 3. **Probar en un iPad o iPhone** antes de mandárselo a alguien que use Apple. Ni Adrian ni Claude pueden probarlo ahora.
 4. **Páginas de una misma canción que suenan seguidas** (como los botones 1-2-3 del original). Esperar a ver si alguien lo pide.
-5. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
+5. **Que funcione sin conexión** (service worker): Adrian quiere añadirlo cuando terminen los cambios actuales. Hasta entonces no, porque haría que cada versión nueva tardara una recarga más en verse.
+6. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
 
 ## Decisiones descartadas y por qué
 

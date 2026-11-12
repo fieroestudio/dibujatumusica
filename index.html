@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Dibuja tu música</title>
+<!-- icono y datos para guardarla como app en la pantalla de inicio -->
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dibuja música">
 <style>
   :root{ --bg:#ffffff; --paper:#fcfcfa; --line:#e7e5e0; --ink:#1d1d1b; --mute:#8d8a84;
          --key:clamp(44px,min(12vw,12vh),66px); }
@@ -98,6 +107,8 @@
     background:var(--ink);border:1.5px solid var(--ink);color:#fff;display:inline-flex;align-items:center}
   #fs{position:fixed;top:8px;left:8px;width:34px;height:34px;z-index:5;color:var(--mute)}
   #fs[hidden]{display:none}
+  /* abierta como app instalada ya está a pantalla completa: el botón sobra */
+  @media (display-mode:fullscreen),(display-mode:standalone){ #fs{display:none} }
   #recbar{display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:50;background:#e2523f;color:#fff;
     border-radius:999px;padding:8px 18px;font-size:16px;white-space:nowrap}
   body.recording #recbar{display:block}

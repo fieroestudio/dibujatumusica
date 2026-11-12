@@ -6,6 +6,7 @@ Antes de cambiar nada, lee `CONTEXTO.md`. Explica cómo funciona la app, qué se
 
 - Toda la app está en `index.html`: HTML, CSS y JS en un solo archivo, sin npm y sin compilación. Mantenerlo así salvo que Adrian pida lo contrario.
 - Única excepción aprobada por Adrian: `lib/lame.min.js` (codificador MP3, LGPL, sin modificar), que se carga solo al pulsar Sonido en Compartir y descargar.
+- Además: `manifest.webmanifest` e `icons/` (icono de la app). Si cambia el icono, regenerar todos los PNG desde `icons/icon.svg`.
 - **Publicación:** GitHub Pages desde la rama `main`, carpeta raíz. Un push a `main` publica, así que no se sube nada sin probar.
 - `titulo/vectorizar.py` genera `titulo/titulo.svg` a partir de la foto original. La foto **no se sube al repositorio** (`.gitignore`): está solo en la carpeta local de Adrian. El SVG va incrustado en `index.html` (`TITLE_SVG`).
 
