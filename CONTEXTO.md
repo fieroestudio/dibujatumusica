@@ -14,7 +14,7 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 
 - **Web:** GitHub Pages del repositorio `fieroestudio/dibujatumusica` (ver arriba). Quien tiene el enlace ve cada versión nueva al recargar, así que no se publican versiones rotas.
 - **Dispositivos de Adrian:** Android y PC, no hay iOS.
-- **Versión actual:** v14 (12-11-2026): icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
+- **Versión actual:** v15 (12-11-2026): líneas de pulsos menos densas, graves audibles en el móvil, tortuga a 90. v14: icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
 
 ## Cómo funciona
 
@@ -24,8 +24,9 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 - **Cada cruce del cabezal con un trazo es una nota.** Un óvalo da dos notas, arriba y abajo. Se marca con un punto negro y un aro.
 - **Pausa:** apaga en el acto todo lo que suena (v13.3); antes, las notas largas ya programadas seguían hasta el final de la línea.
 - **Si un trazo desaparece mientras suena** (papelera, goma, deshacer o abrir otro dibujo), sus notas se apagan en el acto (v13.1). Antes, las notas largas ya programadas seguían sonando hasta el final de la línea. Dibujar o cambiar de juego no corta nada.
+- **Colores de pulsos: una línea larga suena cada 2 pasos** (v15). Antes una línea horizontal daba 32 notas seguidas y varias juntas sonaban a jaleo (comprobado por Adrian en el móvil). Se aplica dentro de cada trazo: puntos y trazos distintos siguen sonando en cualquier paso, así que los ritmos de corcheas siguen siendo posibles con trazos sueltos. Los puntos negros solo marcan lo que suena. Alternativa descartada por ahora: bajar a 16 pasos por vuelta.
 - **Un cruce es cada pasada del trazo por una columna,** en el orden en que se dibujó. Corregido en v12: antes, dos líneas paralelas en notas vecinas dibujadas sin levantar el dedo se juntaban en una nota a media altura. El temblor dentro de una pasada sigue contando como una nota.
-- **Velocidades (BPM):** tortuga 80, normal 120, conejo 160.
+- **Velocidades (BPM):** tortuga 90 (antes 80: 12 s por vuelta se hacía largo; ahora 10,7 s), normal 120 (8 s), conejo 160 (6 s). El código guarda la letra, así que los dibujos con tortuga pasan solos a 90.
 - **Audio:** Web Audio sintetizado, sin muestras grabadas. La cadena de salida es master 0.42, compresor suave, ganancia y saturación tanh. Una nota repetida del mismo color corta la anterior para que no se acumulen colas. Cada sonido decide cuánta reverb lleva (Videojuego seco, Espacio con mucha).
 - **Nivel medido (v12):** con un dibujo con los 10 colores, el pico es 0,81 en Clásico, 0,78 en Videojuego y 0,74 en Espacio, sin recortes. El volumen de cada sonido nuevo se igualó midiendo, no escuchando. `window.__renderLoop()` genera un bucle sin altavoces y devuelve pico, recortes y número de notas; con `__renderLoop(true)` devuelve las muestras.
 
@@ -50,6 +51,7 @@ El número de cada color es el que se guarda en el código: no reordenar. 0-4 va
   - **Altura libre, sin escalones** (`free`): Láser (Videojuego) y Ovni (Espacio). Sigue la línea como una sirena. Es una vuelta parcial a lo descartado como "tono continuo libre"; lo que cambió es que son sonidos de efecto, donde desafinar no suena a error. Puede chocar con colores melódicos del mismo dibujo.
   - **La altura no cambia la nota sino otra cosa** (`bend`): Nave (abre y cierra el filtro) y Power-up (rapidez del arpegio). La nota es la del inicio del trazo. El Viento solar ya funcionaba así (brillo).
   - Clásico no cambia; el bajo y el planeta siguen en la escala para que haya base.
+- **Graves en el altavoz del móvil (v15):** el bajo de las filas de abajo no se oía en el Android de Adrian (baja hasta ~65 Hz y el altavoz no da nada por debajo de ~200). Se añadió a los graves una capa de armónicos, más fuerte cuanto más grave la nota, para que el oído reconozca la nota aunque el altavoz no la dé (guitarra/bajo, bajo 8 bits, planeta, bombo y meteorito grave). Medido con un filtro que imita el altavoz (corta por debajo de 250 Hz): el bajo de abajo pasa de 0,008 a 0,032 en Clásico, de 0,014 a 0,031 en Videojuego y de 0,038 a 0,049 en Espacio, al nivel de una línea en medio (~0,05). Falta que Adrian lo escuche.
 - **Percusión (color 2):** en los tres juegos, abajo grave, en medio seca y arriba brillante.
 - **Escalas:** Clásico, pentatónica de Do; Videojuego, pentatónica menor de Do; Espacio, tonos enteros. Con cualquiera de ellas, toques donde toques suena bien.
 - **Iconos:** Clásico y Espacio llevan iconos de línea. Videojuego usa botones cuadrados sin icono, a propósito, por abstracto. Órgano se dibuja como tubos y acordeón como fuelle, para no confundirlos con el piano y la flauta.
