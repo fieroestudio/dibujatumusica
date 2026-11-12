@@ -22,6 +22,7 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 - **Tiempo en horizontal:** 32 pasos por bucle, cada paso una corchea.
 - **Altura en vertical:** 15 filas. Arriba agudo, abajo grave. La escala depende del juego de sonidos (ver abajo). La línea continua de la cuadrícula marca la nota base de cada octava.
 - **Cada cruce del cabezal con un trazo es una nota.** Un óvalo da dos notas, arriba y abajo. Se marca con un punto negro y un aro.
+- **Si un trazo desaparece mientras suena** (papelera, goma, deshacer o abrir otro dibujo), sus notas se apagan en el acto (v13.1). Antes, las notas largas ya programadas seguían sonando hasta el final de la línea. Dibujar o cambiar de juego no corta nada.
 - **Un cruce es cada pasada del trazo por una columna,** en el orden en que se dibujó. Corregido en v12: antes, dos líneas paralelas en notas vecinas dibujadas sin levantar el dedo se juntaban en una nota a media altura. El temblor dentro de una pasada sigue contando como una nota.
 - **Velocidades (BPM):** tortuga 80, normal 120, conejo 160.
 - **Audio:** Web Audio sintetizado, sin muestras grabadas. La cadena de salida es master 0.42, compresor suave, ganancia y saturación tanh. Una nota repetida del mismo color corta la anterior para que no se acumulen colas. Cada sonido decide cuánta reverb lleva (Videojuego seco, Espacio con mucha).
