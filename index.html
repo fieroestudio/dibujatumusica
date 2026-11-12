@@ -775,12 +775,13 @@
   // se apagan en el acto, sin esperar a que acabe la nota larga.
   const sounding = new Set();
   function own(vg, stroke, end){ if (stroke && ac instanceof AudioContext) sounding.add({vg, stroke, end}); }
-  function silenceRemoved(){
+  // all=true: apaga todo lo que suena (pausa); si no, solo lo de trazos que ya no existen
+  function silenceRemoved(all){
     if (!ac || !sounding.size) return;
     const now = ac.currentTime;
     sounding.forEach(v => {
       if (v.end < now){ sounding.delete(v); return; }
-      if (strokes.includes(v.stroke)) return;
+      if (!all && strokes.includes(v.stroke)) return;
       try{ v.vg.gain.cancelScheduledValues(now); v.vg.gain.setValueAtTime(v.vg.gain.value, now); v.vg.gain.setTargetAtTime(0, now, 0.03); }catch(_){}
       sounding.delete(v);
     });
@@ -861,7 +862,7 @@
     timer = setInterval(tick, 25); tick();
   }
   function stop(){
-    playing=false; clearInterval(timer); playBtn.innerHTML=ICON_PLAY; playBtn.setAttribute('aria-label','Reproducir');
+    playing=false; clearInterval(timer); silenceRemoved(true); playBtn.innerHTML=ICON_PLAY; playBtn.setAttribute('aria-label','Reproducir');
   }
   playBtn.addEventListener('click', () => playing?stop():start());
 
