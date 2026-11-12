@@ -10,10 +10,11 @@ Antes de cambiar nada, lee `CONTEXTO.md`. Explica cómo funciona la app, qué se
 
 ## Reglas que no se pueden romper
 
-- **No cambiar el orden de `INSTRUMENTS`.** El código guardado de cada dibujo usa el índice del instrumento. Los instrumentos nuevos se añaden al final.
-- **No cambiar el formato del código de dibujo (`v1…`)** sin crear una versión `v2` que siga leyendo `v1`. La gente tiene dibujos guardados.
+- **No cambiar el orden de `SLOTS` (los 10 colores).** El código guardado de cada dibujo usa el número del color. 0-4 van a pulsos y 5-9 son continuos. Caben 10 como máximo en el formato actual.
+- **Cada color se comporta igual en todos los juegos de sonidos** (`KITS` y `SOUNDS`): solo cambia el sonido. Todos los juegos tienen los mismos 10 colores.
+- **No cambiar el formato del código de dibujo (`v2…`)** sin crear una versión nueva que siga leyendo la anterior. `v2` sigue abriendo los `v1` del prototipo.
 - **Claves de `localStorage`:** `dibuja-musica-lib` y `dibuja-musica-cur`. No renombrarlas.
-- **Volumen:** después de cualquier cambio de sonido, medir con `window.__renderLoop()` usando un dibujo cargado con los 8 instrumentos. El pico debe quedar por debajo de 0,9 y sin recortes.
+- **Volumen:** después de cualquier cambio de sonido, medir con `window.__renderLoop()` usando un dibujo cargado con los 10 colores, en cada juego de sonidos. El pico debe quedar por debajo de 0,9 y sin recortes.
 
 ## Cómo trabajar con Adrian
 
