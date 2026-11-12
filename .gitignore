@@ -2,3 +2,6 @@
 titulo/*.jpg
 titulo/*.jpeg
 titulo/*.png
+# Fotos originales de los dibujos del icono: solo en la carpeta local
+icons/*.jpg
+icons/*.jpeg
