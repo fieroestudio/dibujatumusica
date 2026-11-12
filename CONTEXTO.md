@@ -45,6 +45,10 @@ El número de cada color es el que se guarda en el código: no reordenar. 0-4 va
 | 8 | #93c13e lima | Continuo | Órgano | Nave | Nebulosa (colchón) |
 | 9 | #5f7186 gris azulado | Continuo | Acordeón | Power-up (arpegio) | Viento solar (la altura cambia el brillo) |
 
+- **Cómo responde a la altura cada continuo (v13.2, en prueba: si no gusta, se deshace):** por defecto, de nota en nota de la escala. Excepciones solo en los juegos abstractos (`mode` en `SOUNDS`):
+  - **Altura libre, sin escalones** (`free`): Láser (Videojuego) y Ovni (Espacio). Sigue la línea como una sirena. Es una vuelta parcial a lo descartado como "tono continuo libre"; lo que cambió es que son sonidos de efecto, donde desafinar no suena a error. Puede chocar con colores melódicos del mismo dibujo.
+  - **La altura no cambia la nota sino otra cosa** (`bend`): Nave (abre y cierra el filtro) y Power-up (rapidez del arpegio). La nota es la del inicio del trazo. El Viento solar ya funcionaba así (brillo).
+  - Clásico no cambia; el bajo y el planeta siguen en la escala para que haya base.
 - **Percusión (color 2):** en los tres juegos, abajo grave, en medio seca y arriba brillante.
 - **Escalas:** Clásico, pentatónica de Do; Videojuego, pentatónica menor de Do; Espacio, tonos enteros. Con cualquiera de ellas, toques donde toques suena bien.
 - **Iconos:** Clásico y Espacio llevan iconos de línea. Videojuego usa botones cuadrados sin icono, a propósito, por abstracto. Órgano se dibuja como tubos y acordeón como fuelle, para no confundirlos con el piano y la flauta.
@@ -98,7 +102,7 @@ Un botón abre un panel con cuatro opciones. Los archivos se generan primero y l
 - **Forzar horizontal 16:9:** en el móvil obligaba a girarlo. Se pasó a lienzo cuadrado.
 - **Violín sintetizado:** sonaba mal y no gustó. Se cambió por la flauta.
 - **Deslizar el piano:** un piano real no desliza.
-- **Tono continuo libre** (tipo theremín): desafina. El deslizamiento va siempre por notas de la escala.
+- **Tono continuo libre** (tipo theremín): desafina. El deslizamiento va por notas de la escala, salvo en Láser y Ovni (v13.2, a prueba; ver arriba).
 - **Sonidos realistas con grabaciones:** obligaban a usar muestras en archivos aparte y licencias. Se eligieron sonidos abstractos sintetizados.
 - **Mezclar juegos de sonidos en un mismo dibujo:** exigiría 20 o 30 colores; para un niño, cada color tiene que significar siempre lo mismo.
 - **Que un color cambie de comportamiento según el juego:** se valoró y Adrian prefirió que se comporte igual en todos.

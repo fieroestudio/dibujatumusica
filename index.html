@@ -452,11 +452,11 @@
             let best = null;
             prevNotes.forEach(ph => { if (ph.col===c-1 && !now.has(ph.key) && Math.abs(ph.last-row)<=3 && (!best || Math.abs(ph.last-row)<Math.abs(best.last-row))) best = ph; });
             if (best){
-              best.rows.push(row); best.last=row; best.col=c; now.set(best.key, best);
+              best.rows.push(row); best.ys.push(y); best.last=row; best.col=c; now.set(best.key, best);
               schedule[c].push({visual:true, si, i:s.i, x, y});   // solo el punto que marca el cruce
               return;
             }
-            const ph = {glide:true, key:si+'-'+c+'-'+row, si, i:s.i, row, rows:[row], last:row, col:c, x, y};
+            const ph = {glide:true, key:si+'-'+c+'-'+row, si, i:s.i, row, rows:[row], ys:[y], last:row, col:c, x, y};
             schedule[c].push(ph); now.set(ph.key, ph);
             return;
           }
@@ -671,7 +671,7 @@
         const n=noise(t,t+0.08), flt=filt('bandpass',900+row*150,2); n.connect(flt); flt.connect(hitG(g,t,0.95,0.05,0.001));
         const o=osc('square',f*2,t,t+0.03); o.connect(hitG(g,t,0.05,0.025,0.001));
       }},
-      {oct:0, wet:0.35, hold:(g,f,t,end) => {                                                       // láser
+      {oct:0, wet:0.35, mode:'free', hold:(g,f,t,end) => {                                          // láser: altura libre
         env(g,t,0.01,0.1,0.1,0.8,0.08,end);
         const o=osc('square',f,t,end+0.3), lp=filt('lowpass',f*6); o.connect(lp); lp.connect(g);
         vibrato([o.frequency],t,end,9,f*0.012,0.15);
@@ -687,21 +687,22 @@
         vibrato([o.frequency],t,end,6,f*0.008,0.25);
         return [[o.frequency,1]];
       }},
-      {oct:0, wet:0.35, hold:(g,f,t,end) => {                                                       // nave que zumba
+      {oct:0, wet:0.35, mode:'bend', hold:(g,f,t,end) => {                                          // nave: la altura abre el filtro
         env(g,t,0.15,0.09,0.2,0.85,0.25,end);
         const o1=osc('sawtooth',f,t,end+0.4), o2=osc('sawtooth',f,t,end+0.4); o1.detune.value=-10; o2.detune.value=10;
         const lp=filt('lowpass',f*3.5,4), lfo=osc('sine',0.7,t,end+0.4), lg=ac.createGain(); lg.gain.value=f*1.5;
         lfo.connect(lg); lg.connect(lp.frequency); o1.connect(lp); o2.connect(lp); lp.connect(g);
-        return [[o1.frequency,1],[o2.frequency,1],[lp.frequency,3.5]];
+        return [[o1.frequency,1],[o2.frequency,1],[lp.frequency,3.5,true]];
       }},
-      {oct:0, wet:0.35, hold:(g,f,t,end) => {                                                       // power-up: arpegio rápido nota, quinta, octava
+      {oct:0, wet:0.35, mode:'bend', hold:(g,f,t,end) => {                                          // power-up: arpegio; la altura cambia su rapidez
         env(g,t,0.01,0.08,0.05,0.9,0.08,end);
         const o=osc('square',f,t,end+0.3), lp=filt('lowpass',3500);
         const sr=ac.sampleRate, st=Math.round(0.05*sr), steps=[0,700,1200], buf=ac.createBuffer(1,st*steps.length,sr), d=buf.getChannelData(0);
         steps.forEach((c,k) => d.fill(c,k*st,(k+1)*st));
         const arp=ac.createBufferSource(); arp.buffer=buf; arp.loop=true; arp.connect(o.detune); arp.start(t); arp.stop(end+0.3);
+        const speed = fk => Math.pow(fk/260, 0.7); arp.playbackRate.value = speed(f);
         o.connect(lp); lp.connect(g);
-        return [[o.frequency,1]];
+        return [[o.frequency,1],[arp.playbackRate,speed,true]];
       }},
     ],
     espacio: [
@@ -748,7 +749,7 @@
         const sub=osc('sine',f,t,end+0.5), sa=ac.createGain(); sa.gain.value=0.5; sub.connect(sa); sa.connect(g);
         return [[o.frequency,1],[sub.frequency,1]];
       }},
-      {oct:12, wet:1.6, hold:(g,f,t,end) => {                                                       // ovni: sirena con vibrato ancho
+      {oct:12, wet:1.6, mode:'free', hold:(g,f,t,end) => {                                          // ovni: sirena libre con vibrato ancho
         env(g,t,0.1,0.15,0.2,0.85,0.3,end);
         const o=osc('sine',f,t,end+0.4); o.connect(g);
         vibrato([o.frequency],t,end,5.5,f*0.012,0.05);
@@ -797,17 +798,31 @@
     if (snd.hold) snd.hold(g, f, t, t+Math.max(0.15,dur*0.95));
     else snd.hit(g, f, t, row, dur);
   }
-  // Un trazo de color continuo = una sola nota que se desliza por la escala
+  // altura sin escalones: entre dos filas, la nota intermedia exacta
+  function freeMidi(y){
+    const r = Math.max(0, Math.min(ROWS-1, (1-y)*ROWS - 0.5)), lo = Math.floor(r), hi = Math.min(ROWS-1, lo+1);
+    return rowToMidi(lo) + (rowToMidi(hi)-rowToMidi(lo))*(r-lo);
+  }
+  // Un trazo de color continuo = una sola nota que se desliza.
+  // mode: (por defecto) de nota en nota de la escala; 'free' sigue la línea sin escalones;
+  // 'bend' mantiene la nota y la altura mueve otra cosa (los parámetros marcados con true).
+  // Cada parámetro: [param, multiplicador de la frecuencia o función(frecuencia), sigue la altura en 'bend']
   function playPhrase(n, t, sd, stroke){
     if (!ac) return;
-    const snd = sound(n.i);
-    const fs = n.rows.map(r => hz(rowToMidi(r) + snd.oct));
+    const snd = sound(n.i), mode = snd.mode;
+    const fs = mode==='free' ? n.ys.map(y => hz(freeMidi(y) + snd.oct)) : n.rows.map(r => hz(rowToMidi(r) + snd.oct));
     const vg = ac.createGain(), g = ac.createGain(); g.connect(vg); out(vg, snd.wet ?? 1);
     own(vg, stroke, t + n.rows.length*sd + 3);
     const P = snd.hold(g, fs[0], t, t + n.rows.length*sd*0.97);
+    const val = (m, f) => typeof m==='function' ? m(f) : f*m;
+    if (mode==='free') P.forEach(([param, m]) => param.setValueAtTime(val(m, fs[0]), t));
     for (let k=1;k<fs.length;k++){
       if (fs[k]===fs[k-1]) continue;
-      P.forEach(([param, m]) => param.setTargetAtTime(fs[k]*m, t+k*sd, 0.035)); // deslizamiento ~0,1 s
+      P.forEach(([param, m, ctl]) => {
+        if (mode==='bend' && !ctl) return;
+        if (mode==='free') param.linearRampToValueAtTime(val(m, fs[k]), t+k*sd);   // sin escalones
+        else param.setTargetAtTime(val(m, fs[k]), t+k*sd, 0.035);                  // deslizamiento ~0,1 s
+      });
     }
   }
   function preview(i, row){ if (!ac) return; playNote(i, row, ac.currentTime+0.01, 0.15); }
