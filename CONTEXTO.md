@@ -93,17 +93,16 @@ Un botón abre un panel con cuatro opciones. Los archivos se generan primero y l
 
 - **Enlace:** `…#d=<código>`. En Android abre el menú de compartir; en el PC lo copia. Al abrir un enlace se quita el `#d=` de la barra para que al recargar no se duplique el dibujo.
 - **Imagen:** PNG 1080×1200, con el dibujo arriba y el título pequeño abajo.
-- **Vídeo:** MP4 1080×1200, misma lámina, dos vueltas grabadas en tiempo real (unos 16 s a velocidad normal) con brillos, puntos y cabezal. Mientras graba, la app queda bloqueada con un aviso rojo arriba. Formato preferido H.264 + AAC; si el navegador no lo tiene, cae a H.264 + Opus, otro MP4 o WebM (y lo avisa). **No comprobado en el Android de Adrian:** en el Chrome de Linux de las pruebas sale VP9 + Opus dentro de MP4, que puede no abrirse en WhatsApp o en iPhone.
+- **Vídeo:** MP4 1080×1200, misma lámina, dos vueltas grabadas en tiempo real (unos 16 s a velocidad normal) con brillos, puntos y cabezal. Mientras graba, la app queda bloqueada con un aviso rojo arriba. Formato preferido H.264 + AAC; si el navegador no lo tiene, cae a H.264 + Opus, otro MP4 o WebM (y lo avisa). **Comprobado por Adrian (12-11-2026):** el vídeo grabado en su Android se manda por WhatsApp y se ve bien. Queda por ver en iPhone.
 - **Sonido:** MP3 160 kbps de dos vueltas, generado sin altavoces con `lib/lame.min.js` (lamejs 1.2.1, LGPL, sin modificar). Es la única librería, aprobada por Adrian, y se carga solo al pulsar Sonido.
 
 ## Pendiente e ideas (por prioridad aproximada)
 
 1. **Que Adrian escuche los 30 sonidos** y diga cuáles cambiar. Los de Videojuego y Espacio, el órgano y el acordeón son nuevos y nadie los ha escuchado. La trompeta sigue en revisión (alternativa: una octava más baja, tipo trombón).
-2. **Probar el vídeo en el Android:** comprobar que el MP4 se abre en la galería y en WhatsApp.
-3. **Probar en un iPad o iPhone** antes de mandárselo a alguien que use Apple. Ni Adrian ni Claude pueden probarlo ahora.
-4. **Páginas de una misma canción que suenan seguidas** (como los botones 1-2-3 del original). Esperar a ver si alguien lo pide.
-5. **Que funcione sin conexión** (service worker): Adrian quiere añadirlo cuando terminen los cambios actuales. Hasta entonces no, porque haría que cada versión nueva tardara una recarga más en verse. **Al hacerlo, es obligatorio añadir un aviso de versión nueva** ("Hay una versión nueva, toca para actualizar"): con el service worker la app instalada guarda su propia copia y, sin ese aviso, se quedaría con la versión vieja sin que nadie se dé cuenta.
-6. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
+2. **Probar en un iPad o iPhone** antes de mandárselo a alguien que use Apple. Ni Adrian ni Claude pueden probarlo ahora.
+3. **Páginas de una misma canción que suenan seguidas** (como los botones 1-2-3 del original). Esperar a ver si alguien lo pide.
+4. **Que funcione sin conexión** (service worker): Adrian quiere añadirlo cuando terminen los cambios actuales. Hasta entonces no, porque haría que cada versión nueva tardara una recarga más en verse. **Al hacerlo, es obligatorio añadir un aviso de versión nueva** ("Hay una versión nueva, toca para actualizar"): con el service worker la app instalada guarda su propia copia y, sin ese aviso, se quedaría con la versión vieja sin que nadie se dé cuenta.
+5. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
 
 ## Decisiones descartadas y por qué
 
