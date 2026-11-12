@@ -87,8 +87,9 @@ Un botón abre un panel con cuatro opciones. Los archivos se generan primero y l
 2. **Probar el vídeo en el Android:** comprobar que el MP4 se abre en la galería y en WhatsApp.
 3. **Probar en un iPad o iPhone** antes de mandárselo a alguien que use Apple. Ni Adrian ni Claude pueden probarlo ahora.
 4. **Páginas de una misma canción que suenan seguidas** (como los botones 1-2-3 del original). Esperar a ver si alguien lo pide.
-5. **Que funcione sin conexión** (service worker): Adrian quiere añadirlo cuando terminen los cambios actuales. Hasta entonces no, porque haría que cada versión nueva tardara una recarga más en verse.
-6. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
+5. **Icono definitivo:** Adrian pasará un dibujo hecho por un niño para sustituir el icono provisional (vectorizarlo como el título y regenerar todos los PNG).
+6. **Que funcione sin conexión** (service worker): Adrian quiere añadirlo cuando terminen los cambios actuales. Hasta entonces no, porque haría que cada versión nueva tardara una recarga más en verse.
+7. **Para profesores, solo si alguien lo pide:** nombres de notas en la cuadrícula, elegir escala, pregunta y respuesta, juegos con reglas. Adrian prefiere que siga siendo un juego, no una app didáctica.
 
 ## Decisiones descartadas y por qué
 
