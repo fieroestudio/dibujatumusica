@@ -322,23 +322,29 @@
   function rebuild(){
     schedule = Array.from({length:STEPS}, ()=>[]);
     strokes.forEach((s, si) => {
+      // cada pasada del trazo por una columna (puntos seguidos en el orden del dibujo) es un cruce
       const cols = new Map();
+      let prevC = -1;
       s.p.forEach(([x,y]) => {
         const c = Math.min(STEPS-1, Math.floor(x*STEPS));
         if (!cols.has(c)) cols.set(c, []);
-        cols.get(c).push(y);
+        const runs = cols.get(c);
+        if (c !== prevC || !runs.length) runs.push([]);
+        runs[runs.length-1].push(y); prevC = c;
       });
       const keys = [...cols.keys()].sort((a,b)=>a-b);
       const isDrum = !INSTRUMENTS[s.i].hold;
       let prevNotes = new Map();   // fila -> nota de la columna anterior
       keys.forEach(c => {
         // cada cruce del trazo con la columna es una nota (un óvalo da dos: arriba y abajo)
-        const ys = cols.get(c).slice().sort((a,b)=>a-b);
+        // pasadas que caen en la misma nota se juntan (p. ej. un garabato que vuelve atrás)
         const groups = [];
-        ys.forEach(y => {
-          const g = groups[groups.length-1];
-          if (g && Math.abs(yToRow(y) - yToRow(g[g.length-1])) <= 1) g.push(y); else groups.push([y]);
+        cols.get(c).forEach(run => {
+          const r = yToRow(run.reduce((a,b)=>a+b,0)/run.length);
+          const g = groups.find(g => g.row===r);
+          if (g) g.ys.push(...run); else groups.push({row:r, ys:run.slice()});
         });
+        groups.forEach((g,k) => groups[k] = g.ys);
         const now = new Map();
         groups.forEach(g => {
           const y = g.reduce((a,b)=>a+b,0)/g.length, row = yToRow(y);
