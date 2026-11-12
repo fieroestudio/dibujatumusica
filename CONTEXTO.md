@@ -14,7 +14,7 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 
 - **Web:** GitHub Pages del repositorio `fieroestudio/dibujatumusica` (ver arriba). Quien tiene el enlace ve cada versión nueva al recargar, así que no se publican versiones rotas.
 - **Dispositivos de Adrian:** Android y PC, no hay iOS.
-- **Versión actual:** v16 (12-11-2026): lo que se dibuja mientras suena se oye en la misma vuelta. v15: líneas de pulsos menos densas, graves audibles en el móvil, tortuga a 90. v14: icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
+- **Versión actual:** v17 (12-11-2026): arreglos de sonido en iPhone. v16: lo que se dibuja mientras suena se oye en la misma vuelta. v15: líneas de pulsos menos densas, graves audibles en el móvil, tortuga a 90. v14: icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
 
 ## Cómo funciona
 
@@ -22,6 +22,11 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 - **Tiempo en horizontal:** 32 pasos por bucle, cada paso una corchea.
 - **Altura en vertical:** 15 filas. Arriba agudo, abajo grave. La escala depende del juego de sonidos (ver abajo). La línea continua de la cuadrícula marca la nota base de cada octava.
 - **Cada cruce del cabezal con un trazo es una nota.** Un óvalo da dos notas, arriba y abajo. Se marca con un punto negro y un aro.
+- **iPhone (v17):** un iPhone no sonaba y otro sí. Causas posibles y arreglos:
+  - **iOS anterior a 14.5:** desde v13.1 el código usaba `AudioContext` sin prefijo y Safari antiguo solo tiene `webkitAudioContext`: la reproducción daba error y quedaba muda (la nota de prueba sí sonaba). Corregido y comprobado simulando ese Safari.
+  - **Interruptor de silencio:** en iPhone apaga el sonido de las webs. Con Safari 16.4 o posterior se pide `navigator.audioSession.type = 'playback'` para sonar igualmente; en versiones anteriores hay que quitar el modo silencio.
+  - **Desbloqueo del audio:** iPhone solo lo permite al terminar un toque (`touchend`/`click`); en el primero se reproduce un silencio de una muestra.
+  - Nada de esto se ha podido probar en un iPhone real.
 - **Dibujar mientras suena (v16):** la partitura se recalcula mientras el dedo está en la pantalla (unas 10 veces por segundo), así que lo que se dibuja delante del cabezal suena en esa misma vuelta. Una línea continua que el cabezal encuentra sin estar sonando (recién dibujada, o alargada) arranca desde ese punto, no espera a su inicio en la vuelta siguiente; puede notarse un pequeño ataque en el empalme. Lo que se dibuja por detrás del cabezal suena en la vuelta siguiente (inevitable: el tiempo va de izquierda a derecha). Comprobado: antes una línea de trompeta dibujada a mitad de vuelta no sonaba (0,0001), ahora suena (0,094); un garabato no acumula voces de una vuelta a otra.
 - **Pausa:** apaga en el acto todo lo que suena (v13.3); antes, las notas largas ya programadas seguían hasta el final de la línea.
 - **Si un trazo desaparece mientras suena** (papelera, goma, deshacer o abrir otro dibujo), sus notas se apagan en el acto (v13.1). Antes, las notas largas ya programadas seguían sonando hasta el final de la línea. Dibujar o cambiar de juego no corta nada.
