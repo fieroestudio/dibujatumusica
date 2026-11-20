@@ -1249,7 +1249,7 @@
   // por encima del 100 % el aparato no puede generar el sonido a tiempo y se entrecorta.
   if (/[?&]prueba\b/.test(location.search)){
     const box = document.createElement('div');
-    box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;background:#fff;border:1px solid #1d1d1b;padding:8px 10px;font:13px/1.45 system-ui,sans-serif;color:#1d1d1b;max-width:92vw';
+    box.style.cssText = 'position:fixed;left:50px;top:8px;z-index:99;background:#fff;border:1px solid #1d1d1b;padding:8px 10px;font:13px/1.45 system-ui,sans-serif;color:#1d1d1b;max-width:92vw';
     box.innerHTML = '<button type="button" style="font:inherit;padding:4px 10px;border:1px solid #1d1d1b;background:#fff;border-radius:0;width:auto;height:auto;display:inline-block;color:#1d1d1b">Medir</button><div></div>';
     document.body.appendChild(box);
     const outEl = box.lastChild, btn = box.firstChild;
