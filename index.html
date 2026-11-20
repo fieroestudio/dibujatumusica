@@ -875,8 +875,12 @@
   const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="#fff"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg>';
   playBtn.innerHTML = ICON_PLAY;
 
+  // Medición con ?prueba en la dirección: notas que salen tarde y mayor parón entre ticks
+  const diag = {late:0, steps:0, gap:0, last:0};
   function tick(){
+    const pn = performance.now(); if (diag.last) diag.gap = Math.max(diag.gap, pn - diag.last); diag.last = pn;
     while (nextTime < ac.currentTime + 0.12){
+      diag.steps++; if (nextTime < ac.currentTime) diag.late++;
       const sd = stepDur();
       schedule[nextStep]?.forEach(n => {
         if (n.glide) startPhrase(n, 0, nextTime, sd);
@@ -898,7 +902,7 @@
     ensureAudio(); if (!ac) return;
     rebuild();
     playing = true; playBtn.innerHTML=ICON_PAUSE; playBtn.setAttribute('aria-label','Pausa');
-    nextStep = 0; nextTime = ac.currentTime + 0.06; loopStart = nextTime;
+    nextStep = 0; nextTime = ac.currentTime + 0.06; loopStart = nextTime; diag.last = 0;
     timer = setInterval(tick, 25); tick();
   }
   function stop(){
@@ -1238,6 +1242,35 @@
   if (document.fullscreenEnabled){
     fsBtn.hidden = false;
     fsBtn.addEventListener('click', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(()=>{}));
+  }
+
+  // ---------- Medición (solo con ?prueba en la dirección) ----------
+  // Calcula una vuelta del dibujo actual sin altavoces y compara lo que tarda con lo que dura:
+  // por encima del 100 % el aparato no puede generar el sonido a tiempo y se entrecorta.
+  if (/[?&]prueba\b/.test(location.search)){
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;background:#fff;border:1px solid #1d1d1b;padding:8px 10px;font:13px/1.45 system-ui,sans-serif;color:#1d1d1b;max-width:92vw';
+    box.innerHTML = '<button type="button" style="font:inherit;padding:4px 10px;border:1px solid #1d1d1b;background:#fff;border-radius:0;width:auto;height:auto;display:inline-block;color:#1d1d1b">Medir</button><div></div>';
+    document.body.appendChild(box);
+    const outEl = box.lastChild, btn = box.firstChild;
+    const show = (cpu) => {
+      outEl.innerHTML = (cpu || '') +
+        '<br>Reproduciendo: ' + diag.late + ' de ' + diag.steps + ' pasos tarde · mayor parón ' + Math.round(diag.gap) + ' ms' +
+        '<br>Núcleos ' + (navigator.hardwareConcurrency||'?') + ' · memoria ' + (navigator.deviceMemory||'?') + ' GB' +
+        (ac ? ' · latencia ' + Math.round((ac.baseLatency||0)*1000) + ' ms · ' + ac.sampleRate + ' Hz' : '');
+    };
+    let cpuTxt = '';
+    btn.addEventListener('click', async () => {
+      if (playing) stop();
+      btn.disabled = true; outEl.textContent = 'Midiendo…';
+      const dur = stepDur()*STEPS + 2, t0 = performance.now();
+      await renderAudio(1, 2);
+      const pct = Math.round((performance.now()-t0)/10/dur);
+      cpuTxt = 'Sonido: ' + pct + ' % del tiempo real (' + strokes.length + ' trazos)';
+      diag.late = diag.steps = diag.gap = 0;
+      btn.disabled = false; show(cpuTxt);
+    });
+    setInterval(() => { if (playing) show(cpuTxt); }, 1000);
   }
 
   // ---------- Arranque ----------

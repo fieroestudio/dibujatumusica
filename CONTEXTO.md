@@ -14,7 +14,7 @@ Web app de una sola página donde se dibuja con colores y el dibujo suena como m
 
 - **Web:** GitHub Pages del repositorio `fieroestudio/dibujatumusica` (ver arriba). Quien tiene el enlace ve cada versión nueva al recargar, así que no se publican versiones rotas.
 - **Dispositivos de Adrian:** Android y PC, no hay iOS.
-- **Versión actual:** v17 (12-11-2026): arreglos de sonido en iPhone. v16: lo que se dibuja mientras suena se oye en la misma vuelta. v15: líneas de pulsos menos densas, graves audibles en el móvil, tortuga a 90. v14: icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
+- **Versión actual:** v17.1 (20-11-2026): medición de rendimiento con `?prueba`. v17 (12-11-2026): arreglos de sonido en iPhone. v16: lo que se dibuja mientras suena se oye en la misma vuelta. v15: líneas de pulsos menos densas, graves audibles en el móvil, tortuga a 90. v14: icono dibujado por un niño. v13: icono y manifiesto para guardarla como app. v12 trajo 10 colores, tres juegos de sonidos, compartir, descargas y pantalla completa. Nadie más tiene el enlace todavía.
 
 ## Cómo funciona
 
@@ -97,6 +97,13 @@ Un botón abre un panel con cuatro opciones. Los archivos se generan primero y l
 - **Sonido:** MP3 160 kbps de dos vueltas, generado sin altavoces con `lib/lame.min.js` (lamejs 1.2.1, LGPL, sin modificar). Es la única librería, aprobada por Adrian, y se carga solo al pulsar Sonido.
 
 ## Pendiente e ideas (por prioridad aproximada)
+
+0. **Sonido entrecortado en la tablet Samsung SM-T550 (Android 7.1.1, Chrome 119) con bastantes trazos** (20-11-2026). Se instala y abre a pantalla completa bien (sin service worker: Chrome lo permite desde la 108). Chrome 119 es la última para Android 7.
+   - Medido en el PC (Chrome headless, dibujo de 30 trazos con los 10 colores): generar el sonido cuesta el 15-22 % del tiempo real de un núcleo rápido; la reverb es unos 2/5 del coste fijo y el resto son las voces (todos los colores cuestan parecido). En un procesador como el de la tablet (2015) eso puede pasar del 100 %, y entonces el sonido se corta.
+   - Además, con la CPU frenada 12 veces, los parones del hilo principal llegan a 270-380 ms y casi un 30 % de las notas salen tarde (el programador mira solo 0,12 s por delante). Con 6 veces, ninguna.
+   - **Medición en el aparato real:** abrir la web en Chrome (no en la app instalada) con `?prueba` en la dirección (`…/dibujatumusica/?prueba`). Sale un recuadro abajo a la izquierda: "Medir" calcula una vuelta del dibujo actual sin altavoces y da el % del tiempo real (más de 100 % = no le da tiempo); al reproducir muestra pasos que salen tarde y el mayor parón. Sin `?prueba` no cambia nada.
+   - Posibles arreglos según lo que salga: si el % pasa de 100, modo ligero (reverb más corta o sin ella, límite de voces a la vez); si salen pasos tarde, mirar más lejos (0,25-0,3 s; empeora un poco lo de v16, lo dibujado justo delante del cabezal) y aligerar el pintado de los brillos. `latencyHint: 'playback'` ayuda a los cortes sueltos, pero retrasa el sonido al tocar un color.
+   - Visto de paso: ese dibujo de 30 trazos da un pico de 0,90-0,92 (límite 0,9), sin recortes.
 
 1. **Que Adrian escuche los 30 sonidos** y diga cuáles cambiar. Los de Videojuego y Espacio, el órgano y el acordeón son nuevos y nadie los ha escuchado. La trompeta sigue en revisión (alternativa: una octava más baja, tipo trombón).
 2. **Probar en un iPad o iPhone** antes de mandárselo a alguien que use Apple. Ni Adrian ni Claude pueden probarlo ahora.
