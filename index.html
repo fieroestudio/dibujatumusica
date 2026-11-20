@@ -825,7 +825,13 @@
   // se apagan en el acto, sin esperar a que acabe la nota larga.
   const sounding = new Set();
   // (sin 'instanceof AudioContext': en iPhone con iOS < 14.5 solo existe webkitAudioContext y eso dejaba la app muda)
-  function own(vg, stroke, end){ if (stroke && !ac.startRendering) sounding.add({vg, stroke, end}); }
+  function own(vg, stroke, end){
+    if (!stroke || ac.startRendering) return;
+    // quitar las que ya acabaron: si no, la lista crece cada vuelta, retiene las voces viejas y el audio
+    // va cada vez más cargado (en la tablet se entrecortaba tras unas vueltas)
+    const now = ac.currentTime; sounding.forEach(v => { if (v.end < now) sounding.delete(v); });
+    sounding.add({vg, stroke, end});
+  }
   // all=true: apaga todo lo que suena (pausa); si no, solo lo de trazos que ya no existen
   function silenceRemoved(all){
     if (!ac || !sounding.size) return;
