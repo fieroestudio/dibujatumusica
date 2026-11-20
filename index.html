@@ -910,7 +910,8 @@
   playBtn.innerHTML = ICON_PLAY;
 
   // Medición con ?prueba en la dirección: notas que salen tarde y mayor parón entre ticks
-  const diag = {late:0, steps:0, gap:0, last:0};
+  const VERSION = 'v18.2';
+  const diag = {late:0, steps:0, gap:0, last:0, loops:[], frames:0, parts:0, glitch:0, off:null, lt:0};
   function tick(){
     const pn = performance.now(); if (diag.last) diag.gap = Math.max(diag.gap, pn - diag.last); diag.last = pn;
     while (nextTime < ac.currentTime + AHEAD){
@@ -924,7 +925,7 @@
         setTimeout(() => hit(n), Math.max(0,delay));
       });
       nextStep++; nextTime += sd;
-      if (nextStep>=STEPS){ nextStep=0; loopStart = nextTime; }
+      if (nextStep>=STEPS){ nextStep=0; loopStart = nextTime; diag.loop && diag.loop(); }
     }
   }
   function hit(n){
@@ -936,7 +937,7 @@
     ensureAudio(); if (!ac) return;
     rebuild();
     playing = true; playBtn.innerHTML=ICON_PAUSE; playBtn.setAttribute('aria-label','Pausa');
-    nextStep = 0; nextTime = ac.currentTime + 0.06; loopStart = nextTime; diag.last = 0;
+    nextStep = 0; nextTime = ac.currentTime + 0.06; loopStart = nextTime; diag.last = 0; diag.off = null; diag.lt = performance.now(); diag.frames = 0;
     timer = setInterval(tick, 25); tick();
   }
   function stop(){
@@ -983,9 +984,12 @@
     }
   }
   function frame(){
+    diag.frames++; if (particles.length > diag.parts) diag.parts = particles.length;
     const now = performance.now();
     glow.forEach((t0, si) => { if (now-t0>350 || !strokes[si]) glow.delete(si); });
-    for (let k=particles.length-1;k>=0;k--){ particles[k].life-=0.03; if (particles[k].life<=0) particles.splice(k,1); }
+    // los puntos se apagan por tiempo (~0,55 s), no por imágenes: si el aparato va lento no se acumulan
+    const dl = 0.03*Math.min(10, (now - (frame.t||now))/16.7); frame.t = now;
+    for (let k=particles.length-1;k>=0;k--){ particles[k].life-=dl; if (particles[k].life<=0) particles.splice(k,1); }
     paint(ctx, W, H, DPR, base);
     if (eraserAt){
       ctx.beginPath(); ctx.arc(eraserAt[0]*W, eraserAt[1]*H, ERASE_R*W, 0, Math.PI*2);
@@ -1287,12 +1291,29 @@
     box.innerHTML = '<button type="button" style="font:inherit;padding:4px 10px;border:1px solid #1d1d1b;background:#fff;border-radius:0;width:auto;height:auto;display:inline-block;color:#1d1d1b">Medir</button><div></div>';
     document.body.appendChild(box);
     const outEl = box.lastChild, btn = box.firstChild;
+    // por vuelta: cortes del audio (el reloj del audio se queda atrás), pasos tarde, imágenes por segundo y puntos animados
+    let lateAt = 0;
+    diag.loop = () => {
+      const now = performance.now(), secs = (now - diag.lt)/1000;
+      diag.loops.push('V' + (diag.loops.length+1) + ': cortes ' + diag.glitch + ' · tarde ' + (diag.late-lateAt) + ' · ' + Math.round(diag.frames/secs) + ' fps · ' + diag.parts + ' puntos');
+      if (diag.loops.length > 12) diag.loops.shift();
+      diag.glitch = 0; lateAt = diag.late; diag.frames = 0; diag.parts = 0; diag.lt = now;
+    };
+    setInterval(() => {
+      if (!playing || !ac || !ac.getOutputTimestamp) return;
+      const ts = ac.getOutputTimestamp(); if (!ts.contextTime) return;
+      const off = ts.performanceTime - ts.contextTime*1000;
+      if (diag.off !== null && Math.abs(off - diag.off) > 15) diag.glitch++;
+      diag.off = off;
+    }, 100);
     const show = (cpu) => {
-      outEl.innerHTML = (cpu || '') +
+      outEl.innerHTML = VERSION + (LITE ? ' · modo ligero' : '') + '<br>' + (cpu || '') +
         '<br>Reproduciendo: ' + diag.late + ' de ' + diag.steps + ' pasos tarde · mayor parón ' + Math.round(diag.gap) + ' ms' +
         '<br>Núcleos ' + (navigator.hardwareConcurrency||'?') + ' · memoria ' + (navigator.deviceMemory||'?') + ' GB' +
-        (ac ? ' · latencia ' + Math.round((ac.baseLatency||0)*1000) + ' ms · ' + ac.sampleRate + ' Hz' : '');
+        (ac ? ' · latencia ' + Math.round((ac.baseLatency||0)*1000) + ' ms · ' + ac.sampleRate + ' Hz' : '') +
+        (diag.loops.length ? '<br>' + diag.loops.join('<br>') : '');
     };
+    show('');
     let cpuTxt = '';
     btn.addEventListener('click', async () => {
       if (playing) stop();
@@ -1301,7 +1322,7 @@
       await renderAudio(1, 2, RATE);
       const pct = Math.round((performance.now()-t0)/10/dur);
       cpuTxt = 'Sonido: ' + pct + ' % del tiempo real (' + strokes.length + ' trazos' + (LITE ? ', modo ligero' : '') + ')';
-      diag.late = diag.steps = diag.gap = 0;
+      diag.late = diag.steps = diag.gap = 0; diag.loops = []; lateAt = 0;
       btn.disabled = false; show(cpuTxt);
     });
     setInterval(() => { if (playing) show(cpuTxt); }, 1000);
