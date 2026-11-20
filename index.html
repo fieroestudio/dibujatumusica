@@ -479,13 +479,22 @@
 
   // ---------- Audio ----------
   let ac=null, master=null, verbSend=null, noiseBuf=null, finalOut=null;
+  // Modo ligero, para aparatos que no dan para generar el sonido a tiempo (se entrecorta):
+  // mitad de muestras por segundo (22 050 Hz), reverb más corta y más margen al programar notas.
+  // Se activa solo con poca memoria (deviceMemory ≤ 2, que en Safari no existe) o con ?ligero en la dirección.
+  // La tablet SM-T550 (1 GB) tardaba un 234 % del tiempo real con 20 trazos.
+  const LITE = /[?&]ligero\b/.test(location.search) || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 2);
+  const RATE = LITE ? 22050 : 44100, VERB_S = LITE ? 0.7 : 1.8, AHEAD = LITE ? 0.35 : 0.12;
+  // Voces a la vez como máximo (modo ligero): al pasar, se corta la más antigua (?ligero=N para probar otro número)
+  const VMAX = LITE ? (+(location.search.match(/[?&]ligero=(\d+)/)||[])[1] || 10) : Infinity;
   const voices = new Map();   // instrumento-nota -> voz que suena, para cortarla si se repite
   function ensureAudio(){
     if (ac){ if (ac.state!=='running') ac.resume(); return; }
     // iPhone: que suene aunque el interruptor de silencio esté puesto (iOS 17 o posterior); pausa la música de otras apps
     try{ if (navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(_){}
     try{
-      ac = new (window.AudioContext||window.webkitAudioContext)();
+      if (LITE){ try{ ac = new AudioContext({sampleRate:RATE, latencyHint:'playback'}); }catch(_){} }
+      if (!ac) ac = new (window.AudioContext||window.webkitAudioContext)();
     }catch(_){ return; }
     buildChain();
   }
@@ -508,34 +517,35 @@
     const outG = ac.createGain(); outG.gain.value = 0.9;
     master = ac.createGain(); master.gain.value=0.42;
     master.connect(comp); comp.connect(outG); outG.connect(soft); soft.connect(ac.destination); finalOut = soft;
-    voices.clear(); waves.clear();
+    voices.clear(); waves.clear(); active.length = 0;
     // reverb sencilla
-    const len = ac.sampleRate*1.8, ir = ac.createBuffer(2,len,ac.sampleRate);
+    const len = Math.round(ac.sampleRate*VERB_S), ir = ac.createBuffer(2,len,ac.sampleRate);
     for (let ch=0;ch<2;ch++){ const d=ir.getChannelData(ch); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3); }
     const conv = ac.createConvolver(); conv.buffer = ir;
-    verbSend = ac.createGain(); verbSend.gain.value=0.32;
+    verbSend = ac.createGain(); verbSend.gain.value=0.32*Math.sqrt(1.8/VERB_S);   // reverb corta: algo más de envío para que se oiga igual
     verbSend.connect(conv); conv.connect(master);
     noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
     const nd = noiseBuf.getChannelData(0); for (let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
   }
   // Genera el audio de varias vueltas sin altavoces (para el MP3 y para medir el volumen)
-  async function renderAudio(loops, tail){
+  // rate: muestras por segundo (el MP3 siempre a 44 100; la medición, a las del modo en uso)
+  async function renderAudio(loops, tail, rate=44100){
     rebuild();
     const saved = [ac, master, verbSend, noiseBuf, finalOut];
     const sd = stepDur(), len = sd*STEPS*loops + tail;
-    ac = new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(2, Math.ceil(44100*len), 44100); buildChain();
+    ac = new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(2, Math.ceil(rate*len), rate); buildChain();
     for (let l=0;l<loops;l++)
       schedule.forEach((list, c) => list.forEach(n => { const t = 0.05 + (l*STEPS+c)*sd;
         n.glide ? playPhrase(n, t, sd) : n.visual ? 0 : playNote(n.i, n.row, t, n.len*sd); }));
     try{ return await ac.startRendering(); }
-    finally{ [ac, master, verbSend, noiseBuf, finalOut] = saved; voices.clear(); waves.clear(); }
+    finally{ [ac, master, verbSend, noiseBuf, finalOut] = saved; voices.clear(); waves.clear(); active.length = 0; }
   }
   // Mide un bucle: devuelve pico, recortes y número de notas (con raw=true, las muestras de 3 s)
   window.__renderLoop = async (raw) => {
-    const buf = await renderAudio(1, 2);
+    const buf = await renderAudio(1, 2, RATE);
     let peak=0, over=0; const d = buf.getChannelData(0);
     for (let i=0;i<d.length;i++){ const v=Math.abs(d[i]); if (v>peak) peak=v; if (v>=0.99) over++; }
-    if (raw) return Array.from(d.subarray(0, 44100*3));
+    if (raw) return Array.from(d.subarray(0, RATE*3));
     const ev = schedule.flat();
     return {peak:+peak.toFixed(3), clipped:over, glides:ev.filter(n=>n.glide).length, notes:ev.filter(n=>!n.glide&&!n.visual).length};
   };
@@ -566,9 +576,23 @@
   function osc(type, f, t, stop){
     const o=ac.createOscillator();
     if (type[0]==='p') o.setPeriodicWave(pulseWave(+type.slice(1)/100)); else o.type=type;
-    o.frequency.setValueAtTime(f,t); o.start(t); o.stop(stop); return o;
+    o.frequency.setValueAtTime(f,t); o.start(t); o.stop(stop); if (srcs) srcs.push([o, stop]); return o;
   }
-  function noise(t, stop){ const n=ac.createBufferSource(); n.buffer=noiseBuf; n.loop=true; n.start(t, Math.random()*0.5); n.stop(stop); return n; }
+  function noise(t, stop){ const n=ac.createBufferSource(); n.buffer=noiseBuf; n.loop=true; n.start(t, Math.random()*0.5); n.stop(stop); if (srcs) srcs.push([n, stop]); return n; }
+  // Límite de voces (modo ligero): fuentes de la voz que se está creando y voces que suenan
+  let srcs = null; const active = [];
+  function voiceBegin(){ if (VMAX!==Infinity) srcs = []; }
+  function voiceEnd(vg, t){
+    if (!srcs) return;
+    const end = Math.max(t, ...srcs.map(s => s[1])), mine = srcs; srcs = null;
+    for (let k=active.length-1;k>=0;k--) if (active[k].end <= t) active.splice(k,1);
+    while (active.length >= VMAX){
+      const v = active.shift();   // la más antigua: se apaga rápido y sus fuentes se paran (es lo que ahorra trabajo)
+      try{ v.vg.gain.cancelScheduledValues(t); v.vg.gain.setTargetAtTime(0, t, 0.02); }catch(_){}
+      v.srcs.forEach(([o, stop]) => { if (stop > t+0.12) try{ o.stop(t+0.12); }catch(_){} });
+    }
+    active.push({vg, end, srcs:mine});
+  }
   function filt(type, f, q){ const b=ac.createBiquadFilter(); b.type=type; b.frequency.value=f; if (q) b.Q.value=q; return b; }
   // ganancia con golpe y caída, conectada a dest
   function hitG(dest, t, peak, d, a=0.004){
@@ -823,8 +847,10 @@
     const vg = ac.createGain(); vg.gain.value = 1; voices.set(key, vg);
     const g = ac.createGain(); g.connect(vg); out(vg, snd.wet ?? 1);
     own(vg, stroke, t + dur + 3);
+    voiceBegin();
     if (snd.hold) snd.hold(g, f, t, t+Math.max(0.15,dur*0.95));
     else snd.hit(g, f, t, row, dur);
+    voiceEnd(vg, t);
   }
   // altura sin escalones: entre dos filas, la nota intermedia exacta
   function freeMidi(y){
@@ -841,7 +867,9 @@
     const fs = mode==='free' ? n.ys.slice(from).map(y => hz(freeMidi(y) + snd.oct)) : n.rows.slice(from).map(r => hz(rowToMidi(r) + snd.oct));
     const vg = ac.createGain(), g = ac.createGain(); g.connect(vg); out(vg, snd.wet ?? 1);
     own(vg, stroke, t + fs.length*sd + 3);
+    voiceBegin();
     const P = snd.hold(g, fs[0], t, t + fs.length*sd*0.97);
+    voiceEnd(vg, t);
     const val = (m, f) => typeof m==='function' ? m(f) : f*m;
     if (mode==='free') P.forEach(([param, m]) => param.setValueAtTime(val(m, fs[0]), t));
     for (let k=1;k<fs.length;k++){
@@ -879,7 +907,7 @@
   const diag = {late:0, steps:0, gap:0, last:0};
   function tick(){
     const pn = performance.now(); if (diag.last) diag.gap = Math.max(diag.gap, pn - diag.last); diag.last = pn;
-    while (nextTime < ac.currentTime + 0.12){
+    while (nextTime < ac.currentTime + AHEAD){
       diag.steps++; if (nextTime < ac.currentTime) diag.late++;
       const sd = stepDur();
       schedule[nextStep]?.forEach(n => {
@@ -1264,9 +1292,9 @@
       if (playing) stop();
       btn.disabled = true; outEl.textContent = 'Midiendo…';
       const dur = stepDur()*STEPS + 2, t0 = performance.now();
-      await renderAudio(1, 2);
+      await renderAudio(1, 2, RATE);
       const pct = Math.round((performance.now()-t0)/10/dur);
-      cpuTxt = 'Sonido: ' + pct + ' % del tiempo real (' + strokes.length + ' trazos)';
+      cpuTxt = 'Sonido: ' + pct + ' % del tiempo real (' + strokes.length + ' trazos' + (LITE ? ', modo ligero' : '') + ')';
       diag.late = diag.steps = diag.gap = 0;
       btn.disabled = false; show(cpuTxt);
     });
